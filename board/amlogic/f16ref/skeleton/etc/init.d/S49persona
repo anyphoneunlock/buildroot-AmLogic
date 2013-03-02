@@ -34,6 +34,7 @@ if [ "X$1" = "Xstart" ]; then
       USERDATA_DISK="/dev/"`ls -l /dev/disk/by-label | grep 'USERDATA' | cut -d "/" -f 3`
       echo $SCRIPTNAME": Checking if "$USERDATA_DISK" is mounted"
       if grep -qs $USERDATA_DISK /proc/mounts ; then
+        echo $SCRIPTNAME": USERDATA found"
         USERDATA_MNTPT=`grep $USERDATA_DISK /proc/mounts | cut -d " " -f 2 | grep 'media'`
         echo $SCRIPTNAME": USERDATA mounted at "$USERDATA_MNTPT
       else
@@ -53,6 +54,9 @@ if [ "X$1" = "Xstart" ]; then
         echo $SCRIPTNAME": xbmc-data folder not found. Folder created"
       fi
       if [ $USERDATA_XBMC -ne 1 ] ; then
+        if [ -f /usr/share/splash/copying.fb.lzo ] ; then
+          lzopcat /usr/share/splash/copying.fb.lzo > /dev/fb0
+        fi
         echo $SCRIPTNAME": Copying local data to USERDATA"
         echo $SCRIPTNAME": Mounting USERDATA async"
         /bin/mount -o remount,rw,async $USERDATA_MNTPT
@@ -91,6 +95,38 @@ if [ "X$1" = "Xstart" ]; then
         /bin/mount -o bind /tmp/userdata.internal/xios/root/.xbmc/temp /root/.xbmc/temp
       fi
     fi
+    # Safety section, rename S49xbmc-pre if it contains toys4me's script
+    if [ $USERDATA_XBMC -eq 1 ] ; then
+      if grep -qs 'mount -o bind /media/sdcard' /tmp/userdata/xios/root/.xbmc/S94xbmc-pre ; then
+        # Found S94xbmc-pre script that manipulates userdata so rename it
+        echo $SCRIPTNAME": Found potentially dangerous S94xbmc-pre script, renaming it"
+        mv /tmp/userdata/xios/root/.xbmc/S94xbmc-pre /tmp/userdata/xios/root/.xbmc/S94xbmc-pre.disabled
+      fi
+    fi
+    echo $SCRIPTNAME": Checking for dropbear keys on USERDATA"
+    if [ ! -d /tmp/userdata/dropbear ] ; then
+      echo $SCRIPTNAME": dropbear directory not found. Creating directory and keys"
+      mkdir -p /tmp/userdata/dropbear
+    else
+      echo $SCRIPTNAME": dropbear directory found."
+    fi
+    echo SCRIPTNAME": Checking for RSA key"
+    if [ -e /tmp/userdata/dropbear/dropbear_rsa_host_key ]; then
+      echo $SCRIPTNAME": Dropbear RSA key found"
+    else
+      echo $SCRIPTNAME": Dropbear RSA key not found. Generating RSA key"
+      /usr/bin/dropbearkey -t rsa -f /tmp/userdata/dropbear/dropbear_rsa_host_key > /dev/null 2>&1
+    fi
+    echo $SCRIPTNAME": Checking for DSS key"
+    if [ -e /tmp/userdata/dropbear/dropbear_rsa_dss_key ] ; then
+      echo $SCRIPTNAME": Dropbear DSS key found"
+    else
+      echo $SCRIPTNAME": Dropbear DSS key not found. Generating DSS key"
+      /usr/bin/dropbearkey -t dss -f /tmp/userdata/dropbear/dropbear_dss_host_key > /dev/null 2>&1
+    fi
+    echo $SCRIPTNAME": Placing keys in /tmp/etc directory"
+    cp -f /tmp/userdata/dropbear/dropbear_rsa_host_key /tmp/etc/dropbear/dropbear_rsa_host_key
+    cp -f /tmp/userdata/dropbear/dropbear_dss_host_key /tmp/etc/dropbear/dropbear_dss_host_key
     echo $SCRIPTNAME": Done"
   fi
-fi      
+fi
