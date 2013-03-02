@@ -1,0 +1,3 @@
+config BR2_PACKAGE_MODSKIN
+depends on BR2_PACKAGE_XBMC
+        bool "ModdedConfluence2 Skin"
