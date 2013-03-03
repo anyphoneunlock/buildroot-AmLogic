@@ -22,7 +22,7 @@ define MODSKIN_INSTALL_TARGET_CMDS
 endef
 
 define MODSKIN_INSTALL_ETC
-        cp -f package/thirdparty/skin.moddedconfluence2/guisettings.xml $(TARGET_DIR)/usr/share/xbmc/system/
+        cp -f package/thirdparty/modskin/guisettings.xml $(TARGET_DIR)/usr/share/xbmc/system/
 endef
 
 MODSKIN_POST_INSTALL_TARGET_HOOKS += MODSKIN_INSTALL_ETC
