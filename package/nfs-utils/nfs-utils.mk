@@ -22,8 +22,6 @@ NFS_UTILS_TARGETS_$(BR2_PACKAGE_NFS_UTILS_RPC_LOCKD) += usr/sbin/rpc.lockd
 NFS_UTILS_TARGETS_$(BR2_PACKAGE_NFS_UTILS_RPC_RQUOTAD) += usr/sbin/rpc.rquotad
 
 define NFS_UTILS_INSTALL_FIXUP
-	$(INSTALL) -m 0755 package/nfs-utils/S60nfs \
-		$(TARGET_DIR)/etc/init.d/S60nfs
 	rm -f $(NFS_UTILS_TARGETS_)
 endef
 
