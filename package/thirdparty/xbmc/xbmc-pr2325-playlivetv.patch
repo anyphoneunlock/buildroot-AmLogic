@@ -1,0 +1,121 @@
+From aa1de30c5c36b3a03a60c0e7bdb12107bec2c279 Mon Sep 17 00:00:00 2001
+From: Franz Koch <franz.koch@elements-net.de>
+Date: Wed, 27 Feb 2013 13:41:51 +0100
+Subject: [PATCH] [PVR] add possibility to start liveTV playback via cAction
+ and keymaps. When called, it first tries to play the last
+ watched channel - if this fails/is not available it uses
+ the first TV channel of the current channel group.
+
+---
+ xbmc/Application.cpp            |   10 ++++++++++
+ xbmc/guilib/Key.h               |    1 +
+ xbmc/input/ButtonTranslator.cpp |    1 +
+ xbmc/pvr/PVRManager.cpp         |   29 +++++++++++++++++++++++++++++
+ xbmc/pvr/PVRManager.h           |    6 ++++++
+ 5 files changed, 47 insertions(+)
+
+diff --git a/xbmc/Application.cpp b/xbmc/Application.cpp
+index 4afcf60..0f63f07 100644
+--- a/xbmc/Application.cpp
++++ b/xbmc/Application.cpp
+@@ -2733,6 +2733,16 @@ bool CApplication::OnAction(const CAction &action)
+     return true;
+   }
+ 
++  // turn on liveTV
++  if (action.GetID() == ACTION_PVR_PLAYLIVETV)
++  {
++    if (!g_PVRManager.IsStarted())
++      CGUIDialogKaiToast::QueueNotification(CGUIDialogKaiToast::Warning, g_localizeStrings.Get(19045), g_localizeStrings.Get(19044));
++    else if (!IsPlaying() || !CurrentFileItem().HasPVRChannelInfoTag()) )
++      g_PVRManager.StartPlayback();
++    return true;
++  }
++
+   if (IsPlaying())
+   {
+     // forward channel switches to the player - he knows what to do
+diff --git a/xbmc/guilib/Key.h b/xbmc/guilib/Key.h
+index 04a8ff3..13ea794 100644
+--- a/xbmc/guilib/Key.h
++++ b/xbmc/guilib/Key.h
+@@ -277,6 +277,7 @@
+ #define ACTION_CHANNEL_DOWN           185
+ #define ACTION_NEXT_CHANNELGROUP      186
+ #define ACTION_PREVIOUS_CHANNELGROUP  187
++#define ACTION_PVR_PLAYLIVETV         188
+ 
+ #define ACTION_TOGGLE_FULLSCREEN      199 // switch 2 desktop resolution
+ #define ACTION_TOGGLE_WATCHED         200 // Toggle watched status (videos)
+diff --git a/xbmc/input/ButtonTranslator.cpp b/xbmc/input/ButtonTranslator.cpp
+index d5ff66a..08e14ea 100644
+--- a/xbmc/input/ButtonTranslator.cpp
++++ b/xbmc/input/ButtonTranslator.cpp
+@@ -223,6 +223,7 @@
+         {"channeldown"           , ACTION_CHANNEL_DOWN},
+         {"previouschannelgroup"  , ACTION_PREVIOUS_CHANNELGROUP},
+         {"nextchannelgroup"      , ACTION_NEXT_CHANNELGROUP},
++        {"playlivetv"            , ACTION_PVR_PLAYLIVETV},
+ 
+         // Mouse actions
+         {"leftclick"         , ACTION_MOUSE_LEFT_CLICK},
+diff --git a/xbmc/pvr/PVRManager.cpp b/xbmc/pvr/PVRManager.cpp
+index 7b98a6b..a9b1d4b 100644
+--- a/xbmc/pvr/PVRManager.cpp
++++ b/xbmc/pvr/PVRManager.cpp
+@@ -1023,6 +1023,35 @@ bool CPVRManager::StartPlayback(const CPVRChannel *channel, bool bPreview /* = f
+   return true;
+ }
+ 
++bool CPVRManager::StartPlayback(void)
++{
++  if (IsPlaying())
++    return true;
++
++  bool bReturn(false);
++  CFileItemPtr channel = m_channelGroups->GetLastPlayedChannel();
++
++  if (channel && channel->HasPVRChannelInfoTag())
++  {
++    bReturn = StartPlayback(channel->GetPVRChannelInfoTag(), (g_guiSettings.GetInt("pvrplayback.startlast") == START_LAST_CHANNEL_MIN));
++  }
++  else
++  {
++    CPVRChannelGroupPtr channelGroup = GetPlayingGroup();
++    if (channelGroup)
++    {
++      CFileItemPtr channel = channelGroup->GetByIndex(0);
++      if (channel && channel->HasPVRChannelInfoTag())
++        bReturn = StartPlayback(channel->GetPVRChannelInfoTag(), false);
++    }
++  }
++
++  if (!bReturn)
++    CLog::Log(LOGERROR, "PVRManager - %s - could not determine channel to start playback with", __FUNCTION__);
++
++  return bReturn;
++}
++
+ bool CPVRManager::PerformChannelSwitch(const CPVRChannel &channel, bool bPreview)
+ {
+   // check parental lock state
+diff --git a/xbmc/pvr/PVRManager.h b/xbmc/pvr/PVRManager.h
+index abfd59e..6578775 100644
+--- a/xbmc/pvr/PVRManager.h
++++ b/xbmc/pvr/PVRManager.h
+@@ -389,6 +389,12 @@
+     bool StartPlayback(const CPVRChannel *channel, bool bPreview = false);
+ 
+     /*!
++     * @brief Start playback of liveTV on no specific channel. This will try to play the last channel viewed channel, and if it fails use first channel in the current channelgroup.
++     * @return True if playback was started, false otherwise.
++     */
++    bool StartPlayback(void);
++
++    /*!
+      * @brief Update the current playing file in the guiinfomanager and application.
+      */
+     void UpdateCurrentFile(void);
+-- 
+1.7.10
+
