@@ -104,29 +104,33 @@ if [ "X$1" = "Xstart" ]; then
       fi
     fi
     echo $SCRIPTNAME": Checking for dropbear keys on USERDATA"
-    if [ ! -d /tmp/userdata/dropbear ] ; then
+    if [ ! -d /tmp/userdata/etc/dropbear ] ; then
       echo $SCRIPTNAME": dropbear directory not found. Creating directory and keys"
-      mkdir -p /tmp/userdata/dropbear
+      mkdir -p /tmp/userdata/etc/dropbear
     else
       echo $SCRIPTNAME": dropbear directory found."
     fi
     echo SCRIPTNAME": Checking for RSA key"
-    if [ -e /tmp/userdata/dropbear/dropbear_rsa_host_key ]; then
+    if [ -e /tmp/userdata/etc/dropbear/dropbear_rsa_host_key ]; then
       echo $SCRIPTNAME": Dropbear RSA key found"
     else
       echo $SCRIPTNAME": Dropbear RSA key not found. Generating RSA key"
-      /usr/bin/dropbearkey -t rsa -f /tmp/userdata/dropbear/dropbear_rsa_host_key > /dev/null 2>&1
+      /usr/bin/dropbearkey -t rsa -f /tmp/userdata/etc/dropbear/dropbear_rsa_host_key > /dev/null 2>&1
     fi
     echo $SCRIPTNAME": Checking for DSS key"
-    if [ -e /tmp/userdata/dropbear/dropbear_rsa_dss_key ] ; then
+    if [ -e /tmp/userdata/etc/dropbear/dropbear_rsa_dss_key ] ; then
       echo $SCRIPTNAME": Dropbear DSS key found"
     else
       echo $SCRIPTNAME": Dropbear DSS key not found. Generating DSS key"
-      /usr/bin/dropbearkey -t dss -f /tmp/userdata/dropbear/dropbear_dss_host_key > /dev/null 2>&1
+      /usr/bin/dropbearkey -t dss -f /tmp/userdata/etc/dropbear/dropbear_dss_host_key > /dev/null 2>&1
     fi
     echo $SCRIPTNAME": Placing keys in /tmp/etc directory"
-    cp -f /tmp/userdata/dropbear/dropbear_rsa_host_key /tmp/etc/dropbear/dropbear_rsa_host_key
-    cp -f /tmp/userdata/dropbear/dropbear_dss_host_key /tmp/etc/dropbear/dropbear_dss_host_key
+    ETCFILES=$(find /tmp/userdata/etc/ -type f)
+    for i in $ETCFILES
+    do
+      echo $SCRIPTNAME:" Copying file $i to /tmp/etc/$(echo $i | sed 's_/tmp/userdata/etc/__')"
+      cp -a $i /tmp/etc/$(echo $i | sed 's_/tmp/userdata/etc/__')
+    done
     echo $SCRIPTNAME": Done"
   fi
 fi
