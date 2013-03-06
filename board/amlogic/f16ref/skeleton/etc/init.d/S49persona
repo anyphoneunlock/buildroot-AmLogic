@@ -110,7 +110,7 @@ if [ "X$1" = "Xstart" ]; then
     else
       echo $SCRIPTNAME": dropbear directory found."
     fi
-    echo SCRIPTNAME": Checking for RSA key"
+    echo $SCRIPTNAME": Checking for RSA key"
     if [ -e /tmp/userdata/etc/dropbear/dropbear_rsa_host_key ]; then
       echo $SCRIPTNAME": Dropbear RSA key found"
     else
