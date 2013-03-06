@@ -27,7 +27,7 @@ index 4afcf60..0f63f07 100644
 +  {
 +    if (!g_PVRManager.IsStarted())
 +      CGUIDialogKaiToast::QueueNotification(CGUIDialogKaiToast::Warning, g_localizeStrings.Get(19045), g_localizeStrings.Get(19044));
-+    else if (!IsPlaying() || !CurrentFileItem().HasPVRChannelInfoTag()) )
++    else if (!IsPlaying() || !CurrentFileItem().HasPVRChannelInfoTag())
 +      g_PVRManager.StartPlayback();
 +    return true;
 +  }
