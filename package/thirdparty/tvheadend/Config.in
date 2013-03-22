@@ -1,12 +1,19 @@
-config BR2_PACKAGE_TVHEADEND
-	bool "tvheadend"
-	help
-	  Web-based PVR.
+comment "tvheadend requires a toolchain with LARGEFILE and IPV6 support"
+    depends on !(BR2_LARGEFILE && BR2_INET_IPV6)
 
-config BR2_PACKAGE_TVHEADEND_AVAHI
-        bool "support avahi"
-        default y
-        depends on BR2_PACKAGE_TVHEADEND
-        depends on BR2_PACKAGE_AVAHI_DAEMON
-        help
-          Include support for avahi
+config BR2_PACKAGE_TVHEADEND
+ bool "tvheadend"
+ depends on BR2_LARGEFILE && BR2_INET_IPV6
+ select BR2_PACKAGE_OPENSSL
+ help
+   Tvheadend is a TV streaming server for Linux supporting DVB-S,
+   DVB-S2, DVB-C, DVB-T, ATSC, IPTV, and Analog video (V4L) as
+   input sources.
+   
+   https://www.lonelycoder.com/redmine/projects/tvheadend/
+   
+   Note:
+     - a default user has been created to log in the web configuration
+       GUI: admin/admin; you can change it at your discretion at runtime.
+     - if you want Avahi support, you'll need to enable:
+           Avahi, D-Bus, libdaemon
