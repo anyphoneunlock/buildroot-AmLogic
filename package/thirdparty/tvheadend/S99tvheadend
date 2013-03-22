@@ -1,0 +1,98 @@
+#! /bin/sh
+# tvheadend startup script inspired by the Debian one in the package
+
+# Author: Yann E. MORIN <yann.morin.1998@free.fr>
+
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+NAME=tvheadend
+DAEMON=/usr/bin/$NAME
+PIDFILE=/var/run/$NAME.pid
+
+[ -f "${DAEMON}" -a -x "${DAEMON}" ] || exit 0
+
+#
+# Default configuration for tvheadend
+#
+
+# TVH_ENABLED
+#   set to 0 to disable upstart job
+TVH_ENABLED=1
+
+# TVH_USER
+#   if set to "" will run as root
+TVH_USER=""
+
+# TVH_GROUP
+#   if set to "" will run as root
+TVH_GROUP=""
+
+# TVH_CONF_DIR
+#   if set to "" will use ~TVH_USER/.hts/tvheadend
+TVH_CONF_DIR="/root/.xbmc/tvheadend"
+
+# TVH_ADAPTERS
+#   if set to "" will use all available adapters
+#   for select adapters use comma seperated list of adapter
+#   numbers, i.e. to use /dev/dvb/adapter0 and /dev/dvb/adapter1 only
+#   set as "0,1"
+TVH_ADAPTERS=""
+
+# TVH_HTTP_PORT
+#   if set to "" will use binary default
+TVH_HTTP_PORT=""
+
+# TVH_HTTP_ROOT
+#   if set to "" will use binary default
+#   else will change the webui root context, useful for proxied
+#   servers
+TVH_HTTP_ROOT=""
+
+# TVH_HTSP_PORT
+#   if set to "" will use binary default
+TVH_HTSP_PORT=""
+
+# TVH_DELAY
+#   if set startup will be delayed N seconds to allow hardware init
+TVH_DELAY="10"
+
+ARGS="-f"
+[ -z "$TVH_USER"      ] || ARGS="$ARGS -u $TVH_USER"
+[ -z "$TVH_GROUP"     ] || ARGS="$ARGS -g $TVH_GROUP"
+[ -z "$TVH_CONF_DIR"  ] || ARGS="$ARGS -c $TVH_CONF_DIR"
+[ -z "$TVH_ADAPTERS"  ] || ARGS="$ARGS -a $TVH_ADAPTERS"
+[ -z "$TVH_HTTP_PORT" ] || ARGS="$ARGS --http_port $TVH_HTTP_PORT"
+[ -z "$TVH_HTTP_ROOT" ] || ARGS="$ARGS --http_root $TVH_HTTP_ROOT"
+[ -z "$TVH_HTSP_PORT" ] || ARGS="$ARGS --htsp_port $TVH_HTSP_PORT"
+
+case "$1" in
+    start)
+        printf "Starting TVHeadend daemon: "
+        [ ! -z "$TVH_DELAY" ] && sleep $TVH_DELAY
+        if start-stop-daemon -S -q -p ${PIDFILE} -m --exec "${DAEMON}" -- ${ARGS}; then
+            printf "OK\n"
+        else
+            printf "failed\n"
+        fi
+        ;;
+    stop)
+        printf "Stopping TVHeadend daemon: "
+        start-stop-daemon -K -q -p ${PIDFILE} -s TERM
+        sleep 2
+        if start-stop-daemon -K -q -p ${PIDFILE} -t; then
+            printf "failed, killing: "
+            start-stop-daemon -K -q -p ${PIDFILE} -s KILL -o
+        fi
+        printf "OK\n"
+        ;;
+    restart|force-reload)
+        "${0}" stop
+        sleep 2
+        "${0}" start
+        ;;
+    *)
+        echo "Usage: $SCRIPTNAME {start|stop|restart|force-reload}" >&2
+        exit 1
+        ;;
+esac
+
+:

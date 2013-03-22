@@ -29,5 +29,6 @@ source "package/thirdparty/xbmcpvr/Config.in"
 source "package/thirdparty/xios-skin/Config.in"
 source "package/thirdparty/boblight/Config.in"
 source "package/thirdparty/modskin/Config.in"
+source "package/thirdparty/samba36/Config.in"
 
 endmenu
